@@ -1,15 +1,12 @@
 // src/server.js (Baru)
-
-// Import dotenv di paling atas untuk memuat variabel lingkungan
 import 'dotenv/config'; 
 import app from "./app.js"; 
-import prisma from "./config/prisma.js"; // Dipakai untuk test-db
+import prisma from "./config/prisma.js"; 
 
-// Ambil PORT dari .env atau default ke 3000
+
 const PORT = process.env.PORT || 3000; 
 
-// 🎯 Endpoint Test Database Connection (Dipindahkan ke sini atau ke route)
-// Kita pertahankan di sini untuk sementara agar app.js bersih.
+
 app.get("/test-db", async (req, res) => {
   try {
     // Jalankan query sederhana

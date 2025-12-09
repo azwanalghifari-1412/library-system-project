@@ -113,10 +113,45 @@ const login = async (req, res, next) => {
     }
 };
 
+// Logika Mendapatkan Data Pengguna yang Sedang Login
+const getMe = async (req, res, next) => {
+    try {
+        // req.user diisi oleh middleware authenticate
+        const { id } = req.user; 
+        
+        // Ambil data pengguna dari database (untuk memastikan data terbaru)
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(id) },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                createdAt: true,
+            }
+        });
+
+        if (!user) {
+            // Seharusnya tidak terjadi jika token valid, tapi ini adalah langkah keamanan
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        res.json({
+            success: true,
+            message: "User profile retrieved successfully.",
+            data: user,
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Ekspor semua fungsi controller
 const authController = {
     register,
     login,
+    getMe,
     // Di sini nanti akan ada refresh, dll.
 };
 

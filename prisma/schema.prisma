@@ -4,67 +4,63 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-}
-
-enum Role {
-  USER
-  ADMIN
+  url      = "file:./dev.db"
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String
-  name       String
-  role       Role     @default(USER)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // example relationship: user can create books (optional)
-  books      Book[]   @relation("CreatedBooks")
+  books Book[] @relation("CreatedBooks")
 
   @@index([email])
 }
 
 model Member {
-  id         Int      @id @default(autoincrement())
-  name       String
-  email      String   @unique
-  phone      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  loans      Loan[]
+  loans Loan[]
+
   @@index([email])
 }
 
 model Book {
-  id         Int      @id @default(autoincrement())
-  title      String
-  author     String
-  publisher  String?
-  year       Int?
-  stock      Int      @default(1)
+  id          Int       @id @default(autoincrement())
+  title       String
+  author      String
+  publisher   String?
+  year        Int?
+  stock       Int       @default(1)
   createdById Int?
-  createdBy  User?    @relation("CreatedBooks", fields: [createdById], references: [id], onDelete: SetNull)
-  loans      Loan[]
-  bookTags   BookTag[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdBy   User?     @relation("CreatedBooks", fields: [createdById], references: [id], onDelete: SetNull)
+  loans       Loan[]
+  bookTags    BookTag[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([title])
 }
 
 model Loan {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   bookId     Int
   memberId   Int
-  loanDate   DateTime @default(now())
+  loanDate   DateTime  @default(now())
   dueDate    DateTime?
   returnDate DateTime?
-  status     LoanStatus @default(BORROWED)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  status     String    @default("BORROWED")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -74,11 +70,11 @@ model Loan {
 }
 
 model Tag {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
   bookTags  BookTag[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model BookTag {
@@ -89,10 +85,4 @@ model BookTag {
   tagId  Int
 
   @@unique([bookId, tagId])
-}
- 
-enum LoanStatus {
-  BORROWED
-  RETURNED
-  LATE
 }

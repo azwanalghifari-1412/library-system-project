@@ -1,6 +1,9 @@
+// src/routes/authRoute.js (Koreksi)
+
 import { Router } from "express";
 import validate from "../middleware/validationMiddleware.js";
-import { registerSchema } from "../validators/authValidator.js";
+// 🎯 KOREKSI: Tambahkan loginSchema ke dalam import list
+import { registerSchema, loginSchema } from "../validators/authValidator.js"; 
 import authController from "../controllers/authController.js";
 
 const router = Router();
@@ -11,6 +14,12 @@ router.post("/register",
     authController.register 
 );
 
-// Di sini nanti ada /login, /refresh, /me, dll.
+// Endpoint: POST /api/auth/login
+router.post("/login", 
+    validate(loginSchema), // Sekarang loginSchema sudah terdefinisi
+    authController.login 
+);
+
+// Di sini nanti ada, /refresh, /me, dll.
 
 export default router;

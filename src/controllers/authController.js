@@ -56,11 +56,68 @@ const register = async (req, res, next) => {
     }
 };
 
+const login = async (req, res, next) => {
+    try {
+        // Data yang sudah bersih dari validationMiddleware
+        const { email, password } = req.validatedData;
+
+        // 1. Cari Pengguna Berdasarkan Email
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Login failed: Invalid email or password."
+            });
+        }
+
+        // 2. Bandingkan Password
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Login failed: Invalid email or password."
+            });
+        }
+
+        // 3. Generate Access Token (JWT)
+        const accessToken = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+        );
+
+        // 4. Generate Refresh Token
+        const refreshToken = jwt.sign(
+            { id: user.id },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        );
+
+        // 5. Respons Berhasil
+        res.json({
+            success: true,
+            message: "Login successful.",
+            data: {
+                user: { id: user.id, name: user.name, email: user.email, role: user.role },
+                accessToken,
+                refreshToken,
+            },
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
 
 // Ekspor semua fungsi controller
 const authController = {
     register,
-    // Di sini nanti akan ada login, refresh, dll.
+    login,
+    // Di sini nanti akan ada refresh, dll.
 };
 
 export default authController;

@@ -1,5 +1,3 @@
-// src/server.js (Perbaikan)
-
 import 'dotenv/config'; 
 import app from "./app.js"; 
 import prisma from "./config/prisma.js"; 
@@ -8,7 +6,6 @@ import prisma from "./config/prisma.js";
 const PORT = process.env.PORT || 3000; 
 
 
-// 🎯 TAMBAHAN: Route Health Check Utama
 app.get("/", (req, res) => {
   // Ini adalah respons untuk http://localhost:3000/
   res.send("Library Management API is running..."); 
@@ -22,7 +19,7 @@ app.get("/test-db", async (req, res) => {
     res.json({ message: "Database connection OK" });
   } catch (err) {
     console.error("Database connection error:", err);
-    // Beri response error
+    // response error
     res.status(500).json({ error: "Database error or connection failed" });
   }
 });

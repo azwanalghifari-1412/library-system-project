@@ -1,5 +1,3 @@
-// src/validators/authValidator.js
-
 import Joi from 'joi';
 
 // Skema untuk pendaftaran pengguna baru

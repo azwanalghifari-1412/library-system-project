@@ -1,3 +1,17 @@
+# node_modules
 node_modules/
-database.sqlite
+
+# Environment Variables
+.env
+.env.*.local
+.env.local
+
+# Database files
+*.db
+*.sqlite
+/dev.db
+/library.db
+
+# Prisma artifacts
 /src/generated/prisma
+prisma/migrations/

@@ -9,8 +9,6 @@ router.get("/", (req, res) => {
   res.json({ message: "API root OK" });
 });
 
-// Daftarkan route Auth
-// Semua endpoint di authRoute.js akan diawali /api/auth
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
 // Di sini nanti didaftarkan Books, Users, dll.

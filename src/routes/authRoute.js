@@ -1,5 +1,3 @@
-// src/routes/authRoute.js (Koreksi)
-
 import { Router } from "express";
 import validate from "../middleware/validationMiddleware.js";
 import { authenticate } from "../middleware/authMiddleware.js";
@@ -16,7 +14,7 @@ router.post("/register",
 
 // Endpoint: POST /api/auth/login
 router.post("/login", 
-    validate(loginSchema), // Sekarang loginSchema sudah terdefinisi
+    validate(loginSchema), 
     authController.login 
 );
 

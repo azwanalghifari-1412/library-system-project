@@ -1,5 +1,6 @@
 import { Router } from "express";
-import authRouter from "./authRoute.js"; // Import route Auth
+import authRouter from "./authRoute.js";
+import userRouter from "./userRoute.js"; 
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get("/", (req, res) => {
 // Daftarkan route Auth
 // Semua endpoint di authRoute.js akan diawali /api/auth
 router.use("/auth", authRouter);
-
+router.use("/users", userRouter);
 // Di sini nanti didaftarkan Books, Users, dll.
 
 export default router;

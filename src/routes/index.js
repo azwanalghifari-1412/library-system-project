@@ -3,6 +3,7 @@ import authRouter from "./authRoute.js";
 import userRouter from "./userRoute.js"; 
 import bookRouter from "./bookRoute.js";
 import tagRouter from "./tagRoute.js";
+import memberRouter from "./memberRoute.js"
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use("/auth", authRouter);
 router.use("/users", userRouter);
 router.use("/books", bookRouter);
 router.use("/tags", tagRouter);
+router.use("/members", memberRouter)
 
 export default router;

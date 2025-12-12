@@ -2,6 +2,7 @@ import { Router } from "express";
 import authRouter from "./authRoute.js";
 import userRouter from "./userRoute.js"; 
 import bookRouter from "./bookRoute.js";
+import tagRouter from "./tagRoute.js";
 
 const router = Router();
 
@@ -13,6 +14,6 @@ router.get("/", (req, res) => {
 router.use("/auth", authRouter);
 router.use("/users", userRouter);
 router.use("/books", bookRouter);
-// Di sini nanti didaftarkan Users, dll.
+router.use("/tags", tagRouter);
 
 export default router;

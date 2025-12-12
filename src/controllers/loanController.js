@@ -1,8 +1,5 @@
-// src/controllers/loanController.js
-
 import prisma from "../config/prisma.js";
 
-// 1. GET ALL LOANS (Riwayat Pinjaman - ADMIN ONLY)
 const getAllLoans = async (req, res, next) => {
     try {
         const loans = await prisma.loan.findMany({
@@ -23,13 +20,10 @@ const getAllLoans = async (req, res, next) => {
     }
 };
 
-
-// 2. BORROW BOOK (POST /api/loans) - Peminjaman
 const borrowBook = async (req, res, next) => {
     try {
         const { bookId, memberId, dueDate } = req.body;
-        
-        // 1. Validasi Keberadaan Buku dan Member
+
         const book = await prisma.book.findUnique({ where: { id: bookId } });
         const member = await prisma.member.findUnique({ where: { id: memberId } });
 
@@ -40,14 +34,11 @@ const borrowBook = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Member not found." });
         }
 
-        // 2. Cek Stok Buku
         if (book.stock <= 0) {
             return res.status(400).json({ success: false, message: "Book is out of stock." });
         }
-        
-        // 3. Buat Transaksi Pinjaman dan Kurangi Stok (Prisma Transaction)
+
         const [newLoan, updatedBook] = await prisma.$transaction([
-            // Transaksi 1: Buat record Loan
             prisma.loan.create({
                 data: {
                     bookId: bookId,
@@ -56,7 +47,6 @@ const borrowBook = async (req, res, next) => {
                     status: "BORROWED"
                 }
             }),
-            // Transaksi 2: Kurangi stok buku
             prisma.book.update({
                 where: { id: bookId },
                 data: { stock: { decrement: 1 } }
@@ -74,26 +64,21 @@ const borrowBook = async (req, res, next) => {
     }
 };
 
-// 3. RETURN BOOK (PUT /api/loans/:id/return) - Pengembalian
 const returnBook = async (req, res, next) => {
     try {
         const loanId = parseInt(req.params.id);
 
-        // 1. Cari Loan
         const loan = await prisma.loan.findUnique({ where: { id: loanId } });
 
         if (!loan) {
             return res.status(404).json({ success: false, message: "Loan record not found." });
         }
 
-        // 2. Cek Status (Pastikan belum dikembalikan)
         if (loan.status !== "BORROWED") {
             return res.status(400).json({ success: false, message: "Book already returned or loan status is invalid." });
         }
-        
-        // 3. Update Loan Status dan Tambah Stok (Prisma Transaction)
+
         const [updatedLoan, updatedBook] = await prisma.$transaction([
-            // Transaksi 1: Update record Loan (Set status = RETURNED, set returnDate)
             prisma.loan.update({
                 where: { id: loanId },
                 data: {
@@ -101,7 +86,6 @@ const returnBook = async (req, res, next) => {
                     returnDate: new Date(),
                 }
             }),
-            // Transaksi 2: Tambah stok buku
             prisma.book.update({
                 where: { id: loan.bookId },
                 data: { stock: { increment: 1 } }

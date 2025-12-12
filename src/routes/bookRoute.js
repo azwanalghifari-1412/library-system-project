@@ -1,6 +1,8 @@
 import { Router } from "express";
 import bookController from "../controllers/bookController.js";
 import { authenticate, authorize } from "../middleware/authMiddleware.js"; 
+import validate from "../middleware/validationMiddleware.js";
+import bookValidator from "../validators/bookValidator.js";
 // import validate from "../middleware/validationMiddleware.js"; 
 // import { bookSchema } from "../validators/bookValidator.js"; // Nanti tambahkan ini
 
@@ -21,7 +23,7 @@ router.get("/:id", bookController.getBookById);
 router.post("/", 
     authenticate, 
     authorize(['ADMIN']),
-    // validate(bookSchema), // Nanti tambahkan validasi
+    validate(bookValidator.bookSchema),
     bookController.createBook
 ); 
 
@@ -29,7 +31,7 @@ router.post("/",
 router.put("/:id", 
     authenticate, 
     authorize(['ADMIN']),
-    // validate(bookSchema), // Nanti tambahkan validasi
+    validate(bookValidator.bookSchema),
     bookController.updateBook
 );
 

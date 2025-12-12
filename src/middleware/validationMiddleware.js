@@ -2,7 +2,7 @@ const validate = (schema) => (req, res, next) => {
     // Gabungkan body, query, dan params untuk validasi menyeluruh
     const { error, value } = schema.validate(req.body, {
         abortEarly: false, 
-        allowUnknown: true 
+        stripUnknown: true,
     });
 
     if (error) {
@@ -23,7 +23,7 @@ const validate = (schema) => (req, res, next) => {
     }
 
     // Data sudah divalidasi, lampirkan data bersih ke request
-    req.validatedData = value;
+    req.body = value;
     next(); 
 };
 

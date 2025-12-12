@@ -9,7 +9,7 @@ const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || 10);
 const register = async (req, res, next) => {
     try {
         // Data yang sudah bersih dari validationMiddleware
-        const { name, email, password } = req.validatedData;
+        const { name, email, password } = req.body;
 
         // 1. Cek Duplikasi Email
         const existingUser = await prisma.user.findUnique({
@@ -59,7 +59,7 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
     try {
         // Data yang sudah bersih dari validationMiddleware
-        const { email, password } = req.validatedData;
+        const { email, password } = req.body;
 
         // 1. Cari Pengguna Berdasarkan Email
         const user = await prisma.user.findUnique({

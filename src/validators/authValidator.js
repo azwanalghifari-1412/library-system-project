@@ -32,7 +32,7 @@ const registerSchema = Joi.object({
             'string.base': 'Password harus berupa teks.',
             'string.empty': 'Password tidak boleh kosong.',
             'string.min': 'Password minimal memiliki {#limit} karakter.',
-            'object.regex': 'Password harus mengandung minimal satu huruf besar, satu huruf kecil, dan satu angka.',
+            'string.pattern.base': 'Password harus mengandung minimal satu huruf besar, satu huruf kecil, dan satu angka.',
             'any.required': 'Password wajib diisi.'
         }),
 });

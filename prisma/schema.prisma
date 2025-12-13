@@ -52,18 +52,20 @@ model Book {
 }
 
 model Loan {
-  id         Int       @id @default(autoincrement())
-  bookId     Int
-  memberId   Int
-  loanDate   DateTime  @default(now())
-  dueDate    DateTime?
-  returnDate DateTime?
-  status     String    @default("BORROWED")
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  book   Book   @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id           Int      @id @default(autoincrement())
+  bookId       Int
+  memberId     Int
+  
+  borrowDate   DateTime @default(now()) 
+  dueDate      DateTime 
+  returnDate   DateTime? 
+  
+  isReturned   Boolean  @default(false)
+  
+  fineAmount   Float    @default(0) 
+  
+  book         Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@index([memberId])

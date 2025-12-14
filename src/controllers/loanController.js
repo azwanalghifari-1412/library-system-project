@@ -10,9 +10,40 @@ const sortableFields = ['id', 'borrowDate', 'dueDate', 'returnDate', 'fineAmount
 const getAllLoans = async (req, res, next) => {
     try {
         
-        const options = buildQueryOptions(req.query, searchableFields, sortableFields);
-        const { where, orderBy, skip, take, page, limit } = options;
+        // --- START REVISI LOGIKA QUERY (MEMANGGIL BUILDER BARU) ---
 
+        // 1. Ambil opsi query dari queryBuilder, dengan defaultSortField = 'borrowDate'
+        const options = buildQueryOptions(
+            req.query, 
+            searchableFields, 
+            sortableFields, 
+            {}, // defaultFilter
+            'borrowDate' // Default sorting field untuk model Loan
+        );
+        let { where, orderBy, skip, take, page, limit } = options;
+        
+        // 2. LOGIKA PENANGANAN SORTING API DOCS (sort=field:direction)
+        // Kita timpa/override orderBy jika ada parameter 'sort' dari API Docs
+        
+        const rawSort = req.query.sort;
+        if (rawSort) {
+            const [field, direction] = rawSort.split(':');
+            
+            // Map 'createdAt' ke 'borrowDate' jika ada
+            let sortField = field;
+            if (sortField === 'createdAt') {
+                sortField = 'borrowDate';
+            }
+            
+            // Hanya izinkan field yang ada di sortableFields
+            if (sortableFields.includes(sortField)) {
+                orderBy = { [sortField]: direction || 'desc' };
+            }
+        }
+        
+        // --- END REVISI LOGIKA QUERY ---
+        
+        // 3. Tambahkan filter spesifik
         if (req.query.memberId) {
              where.memberId = parseInt(req.query.memberId);
         }
@@ -25,7 +56,7 @@ const getAllLoans = async (req, res, next) => {
 
         const loansPromise = prisma.loan.findMany({
             where,
-            orderBy,
+            orderBy, // Gunakan orderBy yang sudah dipastikan valid
             skip,
             take,
             include: { 

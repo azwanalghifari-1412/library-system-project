@@ -1,15 +1,38 @@
 import prisma from "../config/prisma.js";
+import { buildQueryOptions } from '../utils/queryBuilder.js'; 
+import { extractUniqueConstraintError } from '../utils/prismaUtils.js'; 
+
+const searchableFields = ['name', 'email', 'phone'];
+const sortableFields = ['id', 'name', 'email', 'phone', 'createdAt'];
 
 const getAllMembers = async (req, res, next) => {
     try {
-        const members = await prisma.member.findMany({
+        const options = buildQueryOptions(req.query, searchableFields, sortableFields);
+        const { where, orderBy, skip, take, page, limit } = options;
+
+        const membersPromise = prisma.member.findMany({
+            where,
+            orderBy,
+            skip,
+            take,
             select: { id: true, name: true, email: true, phone: true, createdAt: true },
-            orderBy: { id: 'asc' }
         });
+
+        const totalRecordsPromise = prisma.member.count({ where });
+
+        const [members, totalRecords] = await Promise.all([membersPromise, totalRecordsPromise]);
+
+        const totalPages = Math.ceil(totalRecords / limit);
 
         res.json({
             success: true,
             message: "All members retrieved successfully.",
+            meta: { 
+                totalRecords,
+                totalPages,
+                currentPage: page,
+                limit: limit,
+            },
             data: members,
         });
     } catch (error) {
@@ -22,7 +45,17 @@ const getMemberById = async (req, res, next) => {
         const memberId = parseInt(req.params.id);
         const member = await prisma.member.findUnique({
             where: { id: memberId },
-            include: { loans: true } 
+            include: { 
+                loans: {
+                    select: {
+                        id: true,
+                        borrowDate: true,
+                        dueDate: true,
+                        isReturned: true,
+                        book: { select: { title: true, author: true, isbn: true } }
+                    }
+                } 
+            } 
         });
 
         if (!member) {
@@ -48,7 +81,11 @@ const createMember = async (req, res, next) => {
 
     } catch (error) {
         if (error.code === 'P2002') { 
-            return res.status(409).json({ success: false, message: "Registration failed: Email already registered." });
+            const field = extractUniqueConstraintError(error) || 'data';
+            return res.status(409).json({ 
+                success: false, 
+                message: `Registration failed: ${field} already registered.`,
+            });
         }
         next(error);
     }
@@ -72,7 +109,11 @@ const updateMember = async (req, res, next) => {
             return res.status(404).json({ success: false, message: "Member not found." });
         }
         if (error.code === 'P2002') {
-            return res.status(409).json({ success: false, message: "Update failed: Email already exists." });
+            const field = extractUniqueConstraintError(error) || 'data';
+            return res.status(409).json({ 
+                success: false, 
+                message: `Update failed: ${field} already exists.`,
+            });
         }
         next(error);
     }
@@ -92,6 +133,11 @@ const deleteMember = async (req, res, next) => {
         if (error.code === 'P2025') {
             return res.status(404).json({ success: false, message: "Member not found." });
         }
+
+        if (error.code === 'P2003') { 
+             return res.status(409).json({ success: false, message: "Cannot delete member: still linked to active loans or records." });
+        }
+        
         next(error);
     }
 };

@@ -1,42 +1,48 @@
 import jwt from "jsonwebtoken";
 
-// Middleware untuk memverifikasi JWT dan mengotentikasi pengguna
+import { JWT_SECRET } from "../config/jwt.js"; 
+
 const authenticate = (req, res, next) => {
     try {
-        // 1. Ambil token dari header Authorization: Bearer <token>
         const authHeader = req.headers.authorization;
         
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            // Jika header tidak ada atau formatnya salah
             return res.status(401).json({ 
                 success: false, 
                 message: "Authentication failed: No token provided." 
             });
         }
 
-        // Ambil token (hapus 'Bearer ')
         const token = authHeader.split(' ')[1];
 
-        // 2. Verifikasi token menggunakan JWT_SECRET
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
 
-        // 3. Tambahkan data pengguna (id, email, role) ke request object
         req.user = decoded; 
         
         next();
 
     } catch (error) {
+        let message = "Authentication failed: Invalid or expired token.";
+
+        if (error.name === 'TokenExpiredError') {
+             message = "Authentication failed: Token has expired. Please refresh token.";
+        }
+        
         return res.status(401).json({
             success: false,
-            message: "Authentication failed: Invalid or expired token."
+            message: message
         });
     }
 };
 
-// Middleware untuk Otorisasi (cek peran/role)
 const authorize = (roles = []) => (req, res, next) => {
-    // req.user sudah ditambahkan oleh middleware authenticate
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!Array.isArray(roles)) {
+        roles = [roles];
+    }
+
+    const userRole = req.user?.role;
+
+    if (!userRole || (!roles.includes(userRole) && userRole !== 'ADMIN')) {
         return res.status(403).json({
             success: false,
             message: "Authorization failed: Insufficient permissions."

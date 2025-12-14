@@ -1,7 +1,6 @@
 import Joi from 'joi';
 
-// Skema untuk pendaftaran pengguna baru
-const registerSchema = Joi.object({
+const registerValidator = Joi.object({ 
     name: Joi.string()
         .min(3)
         .max(100)
@@ -15,7 +14,7 @@ const registerSchema = Joi.object({
         }),
 
     email: Joi.string()
-        .email({ tlds: { allow: false } }) // Menonaktifkan cek Top-Level Domain (TLD)
+        .email({ tlds: { allow: false } }) 
         .required()
         .messages({
             'string.base': 'Email harus berupa teks.',
@@ -26,7 +25,7 @@ const registerSchema = Joi.object({
 
     password: Joi.string()
         .min(8)
-        .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])')) // Minimal 1 huruf kecil, 1 huruf besar, 1 angka
+        .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])')) 
         .required()
         .messages({
             'string.base': 'Password harus berupa teks.',
@@ -38,7 +37,7 @@ const registerSchema = Joi.object({
 });
 
 // Skema untuk login
-const loginSchema = Joi.object({
+const loginValidator = Joi.object({ 
     email: Joi.string()
         .email({ tlds: { allow: false } })
         .required(),
@@ -47,5 +46,15 @@ const loginSchema = Joi.object({
         .required(),
 });
 
+// Skema untuk Refresh Token
+const refreshTokenValidator = Joi.object({
+    refreshToken: Joi.string()
+        .required()
+        .messages({
+            'string.empty': 'Refresh token tidak boleh kosong.',
+            'any.required': 'Refresh token wajib diisi.'
+        }),
+});
 
-export { registerSchema, loginSchema };
+
+export { registerValidator, loginValidator, refreshTokenValidator };

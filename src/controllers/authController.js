@@ -1,39 +1,26 @@
 import prisma from "../config/prisma.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 
-// Ambil SALT_ROUNDS dari environment 
+import { generateAuthTokens } from '../utils/tokenUtils.js';
+
+import { extractUniqueConstraintError } from '../utils/prismaUtils.js';
+
+import jwt from "jsonwebtoken"; 
+
 const SALT_ROUNDS = parseInt(process.env.BCRYPT_SALT_ROUNDS || 10); 
 
-// Logika Pendaftaran Pengguna Baru
 const register = async (req, res, next) => {
     try {
-        // Data yang sudah bersih dari validationMiddleware
         const { name, email, password } = req.body;
 
-        // 1. Cek Duplikasi Email
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
-
-        if (existingUser) {
-            // Jika email sudah terdaftar, kembalikan 409 Conflict
-            return res.status(409).json({
-                success: false,
-                message: "Registration failed: Email already registered."
-            });
-        }
-
-        // 2. Hash Password
         const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-        // 3. Simpan Pengguna ke Database
         const newUser = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: 'USER', // Default role untuk pengguna baru
+                role: 'USER', 
             },
             select: {
                 id: true,
@@ -44,7 +31,6 @@ const register = async (req, res, next) => {
             }
         });
 
-        // 4. Respons Berhasil
         res.status(201).json({
             success: true,
             message: "User registered successfully.",
@@ -52,16 +38,22 @@ const register = async (req, res, next) => {
         });
 
     } catch (error) {
+        if (error.code === 'P2002') {
+            const field = extractUniqueConstraintError(error) || 'data';
+            return res.status(409).json({
+                success: false,
+                message: `Registration failed: ${field} already registered.`,
+            });
+        }
+
         next(error); 
     }
 };
 
 const login = async (req, res, next) => {
     try {
-        // Data yang sudah bersih dari validationMiddleware
         const { email, password } = req.body;
 
-        // 1. Cari Pengguna Berdasarkan Email
         const user = await prisma.user.findUnique({
             where: { email },
         });
@@ -73,7 +65,6 @@ const login = async (req, res, next) => {
             });
         }
 
-        // 2. Bandingkan Password
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
@@ -83,21 +74,8 @@ const login = async (req, res, next) => {
             });
         }
 
-        // 3. Generate Access Token (JWT)
-        const accessToken = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
-        );
+        const { accessToken, refreshToken } = generateAuthTokens(user);
 
-        // 4. Generate Refresh Token
-        const refreshToken = jwt.sign(
-            { id: user.id },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
-
-        // 5. Respons Berhasil
         res.json({
             success: true,
             message: "Login successful.",
@@ -113,13 +91,45 @@ const login = async (req, res, next) => {
     }
 };
 
-// Logika Mendapatkan Data Pengguna yang Sedang Login
+const handleRefreshToken = async (req, res, next) => {
+    const { refreshToken } = req.body; 
+
+    if (!refreshToken) {
+        return res.status(401).json({ success: false, message: "Refresh token is missing." });
+    }
+
+    try {
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET); 
+
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.id },
+            select: { id: true, email: true, role: true, name: true }
+        });
+
+        if (!user) {
+            return res.status(403).json({ success: false, message: "Invalid user linked to refresh token." });
+        }
+
+        const { accessToken } = generateAuthTokens(user); 
+
+        res.json({
+            success: true,
+            message: "Access token refreshed successfully.",
+            data: {
+                accessToken,
+                user: { id: user.id, name: user.name, email: user.email, role: user.role },
+            }
+        });
+
+    } catch (error) {
+        res.status(403).json({ success: false, message: "Invalid or expired refresh token." });
+    }
+};
+
 const getMe = async (req, res, next) => {
     try {
-        // req.user diisi oleh middleware authenticate
         const { id } = req.user; 
         
-        // Ambil data pengguna dari database (untuk memastikan data terbaru)
         const user = await prisma.user.findUnique({
             where: { id: parseInt(id) },
             select: {
@@ -132,7 +142,6 @@ const getMe = async (req, res, next) => {
         });
 
         if (!user) {
-            // Seharusnya tidak terjadi jika token valid, tapi ini adalah langkah keamanan
             return res.status(404).json({ success: false, message: "User not found." });
         }
 
@@ -147,12 +156,11 @@ const getMe = async (req, res, next) => {
     }
 };
 
-// Ekspor semua fungsi controller
 const authController = {
     register,
     login,
     getMe,
-    // Di sini nanti akan ada refresh, dll.
+    handleRefreshToken, 
 };
 
 export default authController;

@@ -2,10 +2,10 @@
   "name": "library-system-project",
   "version": "1.0.0",
   "description": "Backend REST API for Library Management System",
-  "main": "src/server.js", 
+  "main": "src/server.js",
   "scripts": {
-    "dev": "node --watch src/server.js", 
-    "start": "node src/server.js", 
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:seed": "node prisma/seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,15 +22,19 @@
   "dependencies": {
     "@prisma/client": "^5.15.1",
     "bcrypt": "^5.x.x",
+    "compression": "^1.8.1",
     "cors": "^2.x.x",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "joi": "^17.x.x",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
     "jsonwebtoken": "^9.x.x",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "prisma": "^5.15.1",
-    "@types/node": "^24.10.2"
+    "@types/node": "^24.10.2",
+    "prisma": "^5.15.1"
   }
 }

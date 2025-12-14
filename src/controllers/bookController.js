@@ -1,21 +1,41 @@
 import prisma from "../config/prisma.js";
+import { buildQueryOptions } from '../utils/queryBuilder.js'; 
+import { extractUniqueConstraintError } from '../utils/prismaUtils.js'; 
 
-// --- CRUD Operations ---
+const searchableFields = ['title', 'author', 'isbn']; 
+const sortableFields = ['id', 'title', 'author', 'stock', 'createdAt'];
 
-// 1. GET ALL BOOKS (List)
 const getAllBooks = async (req, res, next) => {
     try {
-        const books = await prisma.book.findMany({
+        const options = buildQueryOptions(req.query, searchableFields, sortableFields);
+        const { where, orderBy, skip, take, page, limit } = options;
+
+        const booksPromise = prisma.book.findMany({
+            where,
+            orderBy,
+            skip,
+            take,
             select: {
-                id: true, title: true, author: true, stock: true,
-                createdBy: { select: { name: true } }, // Tampilkan nama user yang membuat
+                id: true, title: true, author: true, stock: true, isbn: true,
+                createdBy: { select: { name: true } }, 
             },
-            orderBy: { id: 'asc' }
         });
+
+        const totalRecordsPromise = prisma.book.count({ where });
+
+        const [books, totalRecords] = await Promise.all([booksPromise, totalRecordsPromise]);
+
+        const totalPages = Math.ceil(totalRecords / limit);
 
         res.json({
             success: true,
             message: "Books list retrieved successfully.",
+            meta: { 
+                totalRecords,
+                totalPages,
+                currentPage: page,
+                limit: limit,
+            },
             data: books,
         });
     } catch (error) {
@@ -23,7 +43,6 @@ const getAllBooks = async (req, res, next) => {
     }
 };
 
-// 2. GET BOOK BY ID (Detail)
 const getBookById = async (req, res, next) => {
     try {
         const bookId = parseInt(req.params.id);
@@ -31,6 +50,7 @@ const getBookById = async (req, res, next) => {
             where: { id: bookId },
             include: { 
                 createdBy: { select: { name: true } },
+                // Jika bookTags menggunakan relasi many-to-many, ini sudah benar
                 bookTags: { include: { tag: true } } 
             }
         });
@@ -45,44 +65,46 @@ const getBookById = async (req, res, next) => {
     }
 };
 
-// 3. CREATE BOOK (Hanya Admin)
 const createBook = async (req, res, next) => {
     try {
-        // Asumsi data validasi sudah lolos, dan req.body memiliki data buku
-        const { title, author, publisher, year, stock } = req.body;
+        const { title, author, publisher, year, stock, isbn } = req.body;
         
-        // createdById diambil dari token yang diverifikasi oleh authenticate middleware
         const createdById = req.user.id; 
 
         const newBook = await prisma.book.create({
             data: { 
-                title, author, publisher, year: parseInt(year), stock: parseInt(stock) || 1,
+                title, author, publisher, year: parseInt(year), stock: parseInt(stock) || 1, isbn,
                 createdById,
             },
-            select: { id: true, title: true, author: true, stock: true, createdBy: { select: { name: true } } }
+            select: { id: true, title: true, author: true, stock: true, isbn: true, createdBy: { select: { name: true } } }
         });
 
         res.status(201).json({ success: true, message: "Book created successfully.", data: newBook });
 
     } catch (error) {
+        if (error.code === 'P2002') {
+            const field = extractUniqueConstraintError(error) || 'data';
+            return res.status(409).json({
+                success: false,
+                message: `Book creation failed: ${field} already exists.`,
+            });
+        }
         next(error);
     }
 };
 
-// 4. UPDATE BOOK (Hanya Admin)
 const updateBook = async (req, res, next) => {
     try {
         const bookId = parseInt(req.params.id);
-        const data = req.body; // Ambil semua data dari body
+        const data = req.body; 
 
-        // Konversi stock dan year ke integer jika ada
         if (data.stock) data.stock = parseInt(data.stock);
         if (data.year) data.year = parseInt(data.year);
 
         const updatedBook = await prisma.book.update({
             where: { id: bookId },
             data: data,
-            select: { id: true, title: true, author: true, stock: true }
+            select: { id: true, title: true, author: true, stock: true, isbn: true }
         });
 
         res.json({ success: true, message: "Book updated successfully.", data: updatedBook });
@@ -91,11 +113,17 @@ const updateBook = async (req, res, next) => {
         if (error.code === 'P2025') {
             return res.status(404).json({ success: false, message: "Book not found." });
         }
+        if (error.code === 'P2002') {
+            const field = extractUniqueConstraintError(error) || 'data';
+            return res.status(409).json({
+                success: false,
+                message: `Book update failed: ${field} already exists.`,
+            });
+        }
         next(error);
     }
 };
 
-// 5. DELETE BOOK (Hanya Admin)
 const deleteBook = async (req, res, next) => {
     try {
         const bookId = parseInt(req.params.id);
@@ -104,7 +132,7 @@ const deleteBook = async (req, res, next) => {
             where: { id: bookId },
         });
 
-        res.status(204).json(); // 204 No Content
+        res.status(204).json(); 
 
     } catch (error) {
         if (error.code === 'P2025') {

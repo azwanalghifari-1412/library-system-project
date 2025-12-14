@@ -1,4 +1,4 @@
-# 📚 API Documentation: Library Management System
+# API Documentation: Library Management System
 
 Ini adalah dokumentasi teknis untuk RESTful API yang berfungsi sebagai *backend* sistem manajemen perpustakaan. API ini dibangun menggunakan Node.js (Express.js), Prisma, dan arsitektur *Modular Monolith*.
 
@@ -62,19 +62,61 @@ Digunakan untuk mendapatkan *Access Token*.
     }
   }
 }
-## 3. Endpoints Utama & Query Parameters 
 
-Semua endpoints yang mengembalikan daftar (GET /...) mendukung Query String Parameter untuk Pagination, Search, Filtering, dan Sorting.
+## 3. Endpoints Utama & Query Parameters
 
-Query Parameter Universal
-Parameter,Contoh Nilai,Deskripsi,Berlaku Untuk
-page,?page=2,Nomor halaman data (default: 1).,Semua GET List
-limit,?limit=25,Jumlah data per halaman (default: 10).,Semua GET List
-search,?search=Fiksi,"Mencari di kolom kunci (title/author untuk buku, name/email untuk user/member).","Books, Users, Members"
-sort,?sort=createdAt:desc,Mengurutkan data. Format: [field]:[asc/desc].,Semua GET List
-filter,?filter=stock:gt:0,"Memfilter data. Gunakan operator: eq (equal), gt (greater than), lt (less than).","Books, Loans"
+Semua *endpoints* yang mengembalikan daftar (`GET /...`) mendukung Query String Parameter untuk Pagination, Search, Filtering, dan Sorting.
 
-3.1. Book Management (/books)[GET] /booksQuery Params Spesifik: ?filter=tagId:eq:3 (Filter buku berdasarkan Tag ID).Respons: Mengembalikan daftar buku lengkap dengan data tags.[POST] /books (ADMIN Only)FieldTipeWajibDeskripsititleStringYaJudul buku.authorStringYaPenulis.stockNumberYaJumlah stok awal (min. 0).tagIdsArray<Number>YaDaftar ID Tag yang terkait.isbnString?TidakISBN buku (Harus unik jika diisi).publisherString?TidakPenerbit.yearNumber?TidakTahun terbit.3.2. Loan Management (/loans)[POST] /loans/borrow (ADMIN Only)Membuat transaksi peminjaman baru. Stok buku akan berkurang 1.FieldTipeWajibDeskripsibookIdNumberYaID Buku yang dipinjam.memberIdNumberYaID Anggota yang meminjam.dueDateDate StringYaTanggal wajib pengembalian (Format: YYYY-MM-DD).[POST] /loans/return (ADMIN Only)Memproses pengembalian buku. Stok buku akan bertambah 1.FieldTipeWajibDeskripsiloanIdNumberYaID Transaksi Peminjaman.Respons Pengembalian (200 OK):JSON{
+### Query Parameter Universal
+
+| Parameter | Contoh Nilai | Deskripsi | Berlaku Untuk |
+| :--- | :--- | :--- | :--- |
+| `page` | `?page=2` | Nomor halaman data (default: 1). | Semua GET List |
+| `limit` | `?limit=25` | Jumlah data per halaman (default: 10). | Semua GET List |
+| `search` | `?search=Fiksi` | Mencari di kolom kunci (`title`/`author` untuk buku, `name`/`email` untuk user/member). | Books, Users, Members |
+| `sort` | `?sort=createdAt:desc` | Mengurutkan data. Format: `[field]:[asc/desc]`. | Semua GET List |
+| `filter` | `?filter=stock:gt:0` | Memfilter data. Gunakan operator: `eq` (equal), `gt` (greater than), `lt` (less than). | Books, Loans |
+
+### 3.1. Book Management (`/books`)
+
+#### **[GET] /books**
+
+* **Query Params Spesifik:** `?filter=tagId:eq:3` (Filter buku berdasarkan Tag ID).
+* **Respons:** Mengembalikan daftar buku lengkap dengan data tags.
+
+#### **[POST] /books** (ADMIN Only)
+
+| Field | Tipe | Wajib | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `title` | String | Ya | Judul buku. |
+| `author` | String | Ya | Penulis. |
+| `stock` | Number | Ya | Jumlah stok awal (min. 0). |
+| `tagIds` | Array<Number> | Ya | Daftar ID Tag yang terkait. |
+| `isbn` | String? | Tidak | ISBN buku (Harus unik jika diisi). |
+| `publisher` | String? | Tidak | Penerbit. |
+| `year` | Number? | Tidak | Tahun terbit. |
+
+### 3.2. Loan Management (`/loans`)
+
+#### **[POST] /loans/borrow** (ADMIN Only)
+Membuat transaksi peminjaman baru. Stok buku akan berkurang 1.
+
+| Field | Tipe | Wajib | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `bookId` | Number | Ya | ID Buku yang dipinjam. |
+| `memberId` | Number | Ya | ID Anggota yang meminjam. |
+| `dueDate` | Date String | Ya | Tanggal wajib pengembalian (Format: YYYY-MM-DD). |
+
+#### **[POST] /loans/return** (ADMIN Only)
+Memproses pengembalian buku. Stok buku akan bertambah 1.
+
+| Field | Tipe | Wajib | Deskripsi |
+| :--- | :--- | :--- | :--- |
+| `loanId` | Number | Ya | ID Transaksi Peminjaman. |
+
+**Respons Pengembalian (200 OK):**
+```json
+{
   "meta": {
     "status": 200,
     "message": "Book returned successfully."

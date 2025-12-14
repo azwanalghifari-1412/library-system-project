@@ -41,6 +41,7 @@ model Book {
   publisher   String?
   year        Int?
   stock       Int       @default(1)
+  isbn        String?   @unique 
   createdById Int?
   createdBy   User?     @relation("CreatedBooks", fields: [createdById], references: [id], onDelete: SetNull)
   loans       Loan[]
@@ -52,20 +53,20 @@ model Book {
 }
 
 model Loan {
-  id           Int      @id @default(autoincrement())
-  bookId       Int
-  memberId     Int
+  id          Int      @id @default(autoincrement())
+  bookId      Int
+  memberId    Int
   
-  borrowDate   DateTime @default(now()) 
-  dueDate      DateTime 
-  returnDate   DateTime? 
+  borrowDate  DateTime @default(now()) 
+  dueDate     DateTime 
+  returnDate  DateTime? 
   
-  isReturned   Boolean  @default(false)
+  isReturned  Boolean  @default(false)
   
-  fineAmount   Float    @default(0) 
+  fineAmount  Float    @default(0)  
   
-  book         Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
-  member       Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  member      Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@index([bookId])
   @@index([memberId])

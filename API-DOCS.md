@@ -10,8 +10,8 @@ Semua *endpoint* API harus diawali dengan *Base URL* berikut:
 
 | Lingkungan      | Base URL                             |
 | :-------------- | :----------------------------------- |
-| **Development** | `http://localhost:3000/api/v1`       |
-| **Production**  | `https://[Your-Domain-or-IP]/api/v1` |
+| **Development** | `http://localhost:3000/`       |
+| **Production**  | `http://http://52.91.246.56:3000/` |
 
 ---
 
@@ -185,7 +185,7 @@ npm run seed
 
 | Role  | Email                                         | Password | Keterangan                  |
 | :---- | :-------------------------------------------- | :------- | :-------------------------- |
-| Admin | [azwansihandal@gmail.com](mailto:admin@library.com) | admin123 | Akses penuh                 |
+| Admin | [azwansihandal@gmail.com](mailto:azwansihandal@gmail.com) | azwan123 | Akses penuh                 |
 | User  | [john.doe@.com](mailto:john.doe@test.com) | user123  | Akses terbatas (GET /books) |
 
 ---
